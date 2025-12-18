@@ -1,29 +1,53 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
 
-const prompts = [
-  "Escribe una frase poética sobre cómo nuestro amor galopa como un corcel incansable sobre un campo de pétalos de sakura, ignorando la distancia. Máximo 15 palabras.",
-  "Escribe una frase sobre la confianza como las raíces profundas de un cerezo y la lealtad de un espíritu de caballo que siempre vuelve a ti. Máximo 15 palabras.",
-  "Escribe una frase sobre nuestras palabras como pétalos al viento de glicinas, volando hacia tu alma en el lomo de un suspiro. Máximo 15 palabras.",
-  "Escribe una frase sobre la paciencia de esperar la primavera para florecer juntos, con la nobleza y fuerza de un caballo fiel. Máximo 15 palabras.",
-  "Escribe una frase sobre un futuro donde cabalgamos libres entre bosques de sakuras eternas, sin mapas ni fronteras. Máximo 15 palabras.",
-  "Escribe una frase final sobre nuestra unión eterna: un galope infinito en un jardín que nunca deja de florecer para nosotros. Máximo 15 palabras."
-];
+export const generateAllLoveSteps = async (): Promise<string[]> => {
+  const prompt = `Escribe 6 frases poéticas cortas (máximo 15 palabras cada una) para un regalo romántico. 
+  Deben seguir este orden y temática:
+  1. El inicio de nuestro viaje (metáfora de potros y sakuras).
+  2. La distancia no detiene nuestro galope (pétalos y kilómetros).
+  3. Palabras al viento (crines al aire y flores blancas).
+  4. Promesa de florecer juntos (caballo noble volviendo a casa).
+  5. Sueños compartidos (campo infinito de glicinas).
+  6. Invitación a una unión eterna (galope sobre pétalos).
+  
+  Devuelve las frases en un array de strings en español, muy tierno y sin comillas.`;
 
-export const generateLoveStep = async (step: number): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompts[step] + " En español muy romántico y poético.",
+      contents: prompt,
       config: {
         temperature: 1.0,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING }
+        }
       }
     });
-    return response.text || "Nuestro amor es el mapa que guía mis pasos hacia ti.";
+    
+    const text = response.text;
+    if (text) {
+      return JSON.parse(text);
+    }
+    return new Array(6).fill("Nuestro amor florece en la distancia.");
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "La distancia es solo una prueba de lo lejos que puede viajar nuestro amor.";
+    return [
+      "Nuestro amor galopa libre entre los primeros brotes de sakura.",
+      "Cada kilómetro es un pétalo que cae esperando nuestro encuentro.",
+      "Mis susurros viajan veloces como crines al viento hacia ti.",
+      "Prometo florecer a tu lado con la nobleza de un corazón fiel.",
+      "En mis sueños, galopamos juntos por campos de paz infinita.",
+      "Unamos nuestras vidas en un galope eterno sobre pétalos de amor."
+    ];
   }
+};
+
+// Mantenemos la función antigua por compatibilidad si fuera necesario, pero ya no se usará en App.tsx
+export const generateLoveStep = async (step: number): Promise<string> => {
+  return "Deprecated: Use generateAllLoveSteps instead.";
 };
